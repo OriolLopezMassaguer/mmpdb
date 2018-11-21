@@ -1,4 +1,4 @@
-drop table constant;
+drop table constant IF EXISTS;
 
 CREATE UNLOGGED TABLE public.constant (
 	constant_smiles varchar(1000) NULL,
@@ -8,7 +8,7 @@ WITH (
 	OIDS=FALSE
 ) ;
 -- TODO PKey index -> UPSERT
-drop table index;
+drop table   IF EXISTS index;
 CREATE UNLOGGED TABLE public.index (
 	constant_smiles varchar(1000) NULL,
 	constant_symmetry_class varchar(1000) NULL,
@@ -23,7 +23,7 @@ WITH (
 	OIDS=FALSE
 ) ;
 
-drop table main;
+drop table  IF EXISTS main ;
 CREATE UNLOGGED TABLE public.main (
 	normalized_smiles varchar(1000) NULL,
 	id varchar(1000) NULL
@@ -32,7 +32,7 @@ WITH (
 	OIDS=FALSE
 ) ;
 
-drop table idrecord;
+drop table  IF EXISTS idrecord;
 CREATE UNLOGGED TABLE public.idrecord (
 	id varchar(1000) NOT NULL,
 	input_smiles varchar(1000) NULL,

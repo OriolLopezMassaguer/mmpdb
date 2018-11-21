@@ -612,6 +612,7 @@ def load_fragment_index(fragment_reader, fragment_filter=None, selected_ids=None
     fstore.close()
     cstore.close()
     istore.close()
+    fragment_store.pg_create_database()
     fragment_store.pg_create_tables()
     fragment_store.pg_load()
     fragment_store.pg_transform()

@@ -24,7 +24,7 @@ CREATE INDEX ix_ct
 
 CREATE INDEX idrecord_id_idx ON public.idrecord (id);
 
-DROP table constant_unique;
+DROP table if exists constant_uniques;
 create UNLOGGED table constant_unique
 as select distinct constant_smiles,constant_with_h_smiles from constant;
 
@@ -38,7 +38,7 @@ CREATE INDEX ix_main
     (normalized_smiles ASC NULLS LAST)
     TABLESPACE pg_default;
 
-drop type index_value_type;
+drop type if exists index_value_type  ;
 CREATE TYPE index_value_type AS (
   id character varying(1000) ,
   variable_symmetry_class character varying(1000) ,
@@ -47,7 +47,7 @@ CREATE TYPE index_value_type AS (
     enumeration_label character varying(1000)
 );
 
-drop table index_agg;
+drop table if exists index_agg;
 create UNLOGGED table index_agg as
 SELECT constant_smiles,constant_symmetry_class,num_cuts,
   jsonb_agg(

@@ -2,14 +2,17 @@ import subprocess
 import psycopg2
 import psycopg2.extras
 
+db_home = "/home/oriol/dev/mmpdb/test_sets/databases_olm/test_new_db_201811/intermediate/"
+filename = "compound_test_new_201811"
+db = "mmpdb_test_new_201811"
+
 #db_home = "/home/oriol/dev/mmpdb/test_db/"
 #filename = "compound_test"
 #db = "mmpdb_test_new"
 
-
-db_home = "/ssd/mmpdb_data/intermediate_test_target/"
-filename = "compound_test_target"
-db = "mmpdb_test_target"
+#db_home = "/ssd/mmpdb_data/intermediate_test_target/"
+#filename = "compound_test_target"
+#db = "mmpdb_test_target"
 
 #db_home = "/home/oriol/dev/mmpdb/compound_all_db/"
 #filename = "compound_all_new"
@@ -20,6 +23,9 @@ db = "mmpdb_test_target"
 #db = "mmpdb_100k_new"
 
 db_scripts="/home/oriol/dev/mmpdb/new_db_scripts/"
+scripts_create = db_scripts + 'create_tables.sql'
+scripts_transform = db_scripts + 'scripts.sql'
+scripts_reagg = db_scripts + 'script_reagg.sql'
 user = "postgres"
 password = "postgres"
 host = "localhost"
@@ -29,7 +35,6 @@ filename_main = db_home + filename + "_main.txt"
 filename_sc = db_home + filename + "_single_cut.txt"
 filename_idrecord = db_home + filename + "_idrecord.txt"
 filename_rejected = db_home + filename + "_rejected.txt"
-
 
 class FragmentStore:
     """
@@ -67,7 +72,6 @@ class FragmentStore:
         """
         self.text_file.close()
 
-
 class ConstantStore:
     """
     """
@@ -93,7 +97,6 @@ class ConstantStore:
         """
         self.text_file.close()
 
-
 class MainStore:
     """
     """
@@ -118,7 +121,6 @@ class MainStore:
 
         """
         self.text_file.close()
-
 
 class IdRecordStore:
     """
@@ -147,55 +149,41 @@ class IdRecordStore:
 
         """
         self.text_file.close()
-
-
 class RejectedStore:
-    """
-    """
     def __init__(self):
-        """
-
-        """
         self.text_file = open(filename_rejected, "w")
         self.text_file.write("number|id|input_smiles\n")
 
     def insert(self, i, rid, input_smiles):
-        """
-
-        Args:
-            i:
-            rid:
-            input_smiles:
-        """
         self.text_file.write(i + "|" + rid + "|" + input_smiles + "\n")
 
     def close(self):
-        """
-
-        """
         self.text_file.close()
 
+def pg_create_database():
+    import psycopg2
+    from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
+    con = psycopg2.connect(dbname='postgres', user=user, host=host,password=password)
+    con.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
+    cur = con.cursor()
+    cur.execute("DROP DATABASE %s  ;" % db)
+    cur.execute("CREATE DATABASE %s  ;" % db)
+    con.close()
 
 def pg_create_tables():
-    """
-
-    """
     print("Creating tables\n")
-    myinput = open(db_scripts + 'create_tables.sql')
+    myinput = open(scripts_create)
     p = subprocess.Popen(["psql", "-U", user, "-h", host, "-d", db], stdin=myinput)
     p.wait()
 
-
 def pg_load():
-    """
-
-    """
     print("Loading CSVs\n")
     print("Loading index\n")
     conn = psycopg2.connect("dbname='" + db + "' user='" + user + "' host='" + host + "' password='" + password + "'")
     # import INDEX
     cur = conn.cursor()
     file_object = open(filename_index)
+    print("Filename index:" + filename_index)
     SQL_STATEMENT = """
         COPY index(constant_smiles,constant_symmetry_class,num_cuts,id,variable_symmetry_class,variable_smiles,attachment_order,enumeration_label)
         FROM STDIN WITH
@@ -253,31 +241,22 @@ def pg_load():
 
 
 def pg_transform():
-    """
-
-    """
     print("Transforming\n")
     # tranform
-    myinput = open(db_scripts + 'scripts.sql')
+    myinput = open(scripts_transform)
     p = subprocess.Popen(["psql", "-U", user, "-h", host, "-d", db], stdin=myinput)
     p.wait()
 
 
 def pg_reagg():
-    """
-
-    """
     print("Reagg\n")
     # reagg
-    myinput = open(db_scripts + 'script_reagg.sql')
+    myinput = open(scripts_reagg)
     p = subprocess.Popen(["psql", "-U", user, "-h", host, "-d", db], stdin=myinput)
     p.wait()
 
 
 def pg_load_sc():
-    """
-
-    """
     print("Load Single cut ct\n")
     # myinput = open(db_home + 'import_h_cte.sql')
     # p = subprocess.Popen(["psql", "-U", user, "-h", host, "-d", db], stdin=myinput)
@@ -300,15 +279,6 @@ def pg_load_sc():
 
 
 def get_ct(conn, smiles):
-    """
-
-    Args:
-        conn:
-        smiles:
-
-    Returns:
-
-    """
     cur = conn.cursor()
     cur.execute("""SELECT constant_with_h_smiles from constant_unique where constant_smiles='%s' """ % smiles)
     rows = cur.fetchall()
@@ -323,15 +293,6 @@ def get_ct(conn, smiles):
 
 
 def get_id(conn, smiles):
-    """
-
-    Args:
-        conn:
-        smiles:
-
-    Returns:
-
-    """
     cur = conn.cursor()
     cur.execute("""SELECT id from main where normalized_smiles='%s' """ % smiles)
     rows = cur.fetchall()
@@ -345,9 +306,6 @@ def get_id(conn, smiles):
 
 
 def addsc():
-    """
-
-    """
     print("Add SC\n")
     ## Add the single cut hydrogen transformations
 
@@ -414,8 +372,6 @@ def addsc():
     fstore.close()
 
 class FragmentIndexDB(object):
-    """
-    """
     def __init__(self):
         """
 
@@ -473,8 +429,6 @@ class FragmentIndexDB(object):
 
 
 class IndexIteration:
-    """
-    """
     def __init__(self):
         """
 
@@ -496,9 +450,6 @@ class IndexIteration:
 
 
 def test_ix():
-    """
-
-    """
     it=IndexIteration()
     for num_cuts,constant_smiles,csc,vp in it.rows:
         print(constant_smiles)
@@ -510,9 +461,6 @@ def test_ix():
     it.close()
 
 def test_idrecord():
-    """
-
-    """
     it=IdToRecordIteration()
     for id,input_smiles,normalized_smiles,num_normalized_heavies in it.rows:
         print(id)
@@ -523,9 +471,6 @@ def test_idrecord():
 
 
 def test_db():
-    """
-
-    """
     conn = psycopg2.connect("dbname='mmpdb_all' user='" + user + "' host='" + host + "' password='" + password + "'")
     cur = conn.cursor(name="index_agg_cursor", cursor_factory=psycopg2.extras.NamedTupleCursor)
     cur.itersize = 100
@@ -547,28 +492,9 @@ def test_db():
 
     conn.close()
 
-def test_sframe():
-        """
-
-        Returns:
-
-        """
-        import  turicreate
-        from turicreate import SFrame
-        conn = psycopg2.connect(
-            "dbname='mmpdb_all' user='" + user + "' host='" + host + "' password='" + password + "'")
-        sf=SFrame.from_sql(conn,"SELECT * from index;")
-        conn.close()
-        return(sf)
 
 
 def dump(index, id_to_record):
-    """
-
-    Args:
-        index:
-        id_to_record:
-    """
     text_file = open(db_home + "index_mem.txt", "w")
     text_file.write(
         "constant_smiles|constant_symmetry_class|num_cuts)|idr|variable_symmetry_class|variable_smiles|attachment_order|enumeration_label\n")

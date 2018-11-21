@@ -113,6 +113,7 @@ def human_memory(n):
 ##     print(2**i+1, human_memory(2**i+1))
     
 def index_command(parser, args):
+    load_fragments_in_memory=True
     reporter = command_support.get_reporter(args.quiet)
 
     if args.title:
@@ -171,7 +172,7 @@ def index_command(parser, args):
         parser.error(str(err))
     # Step 1 load fragments to DB
     print("Step 1: load fragments")
-    if load_fragments:
+    if load_fragments_in_memory:
         with fragment_reader:
             with reporter.progress(fragment_reader, "Loaded fragment record\n") as report_fragment_reader:
                 fragment_index = index_algorithm.load_fragment_index(report_fragment_reader, fragment_filter, selected_ids)

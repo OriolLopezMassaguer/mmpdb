@@ -1,1 +1,0 @@
-constant_smiles|constant_symmetry_class|num_cuts)|idr|variable_symmetry_class|variable_smiles|attachment_order|enumeration_label
