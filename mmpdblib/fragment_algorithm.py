@@ -98,6 +98,7 @@ _atom_and_dot_disconnect_pat = re.compile(r"""
  Br? |
  [NOSPFIbcnosp] |
  \[[^]]*\] |
+ \* |
  \.
 )
 """, re.X)
@@ -786,7 +787,6 @@ def get_hydrogen_fragmentations(smiles, num_heavies):
             fragmentations.append(new_fragmentation)
 
     return fragmentations
-
 
 ###
 

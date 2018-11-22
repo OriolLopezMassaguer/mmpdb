@@ -153,11 +153,6 @@ def find_center_fingerprints(centers, radius):
     center_fps = []
     for atom_idx in centers.atom_ids:
         fp = AllChem.GetMorganFingerprint(centers.mol, radius, fromAtoms=[atom_idx])
-        env = Chem.FindAtomEnvironmentOfRadiusN(centers.mol, radius, atom_idx)
-        submol = Chem.PathToSubmol(centers.mol, env)
-        smiles = Chem.MolToSmiles(centers.mol)
-        subsmiles=Chem.MolToSmiles(submol)
-        print("Submol: "+ smiles + " "+ str(radius)+ " "+ subsmiles)
         # Hash so everything so they are a constant 32 binary bytes.
         center_fp = hashlib.sha256(fp.ToBinary()).digest()
         center_fps.append(center_fp)
@@ -215,14 +210,29 @@ def compute_constant_environment_from_centers(centers, max_radius=5):
 
 def compute_constant_center_fingerprints(constant_smiles, min_radius=0, max_radius=5):
     # If the constant is unlabeled, get the labeled version.
-    if "[*]" in constant_smiles:
-        # The conversion is trivial; it's already canonical, in the order 1, 2, 3.
+    if "*" in constant_smiles:
+        # Handle differences in * representation in pre/post 2018 versions of RDKit
+        if "[*]" in constant_smiles:
+            wildcard = "[*]"
+            width = 3
+        else:
+            wildcard = "*"
+            width = 1
+        # The conversion is direct; it's already canonical, in the order 1, 2, 3.
         # The following works for 1, 2, or 3 attachment points. If n=1 then
         # the last two replace() functions do nothing.
-        constant_smiles = (constant_smiles
-                               .replace("[*]", "[*:1]", 1)
-                               .replace("[*]", "[*:2]", 1)
-                               .replace("[*]", "[*:3]", 1))
+        # The main problem that if the wildcard is "*" then I can't do a
+        # simple string substitution otherwise I'll match the previous *.
+        i = 0
+        i = constant_smiles.find(wildcard, i)
+        if i >= 0:
+            constant_smiles = constant_smiles[:i] + "[*:1]" + constant_smiles[i+width:]
+            i = constant_smiles.find(wildcard, i+5)
+            if i >= 0:
+                constant_smiles = constant_smiles[:i] + "[*:2]" + constant_smiles[i+width:]
+                i = constant_smiles.find(wildcard, i+5)
+                if i >= 0:
+                    constant_smiles = constant_smiles[:i] + "[*:3]" + constant_smiles[i+width:]
 
     env_centers = find_centers(constant_smiles)
 

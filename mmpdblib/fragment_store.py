@@ -6,6 +6,9 @@ db_home = "/home/oriol/dev/mmpdb/test_sets/databases_olm/test_new_db_201811/inte
 filename = "compound_test_new_201811"
 db = "mmpdb_test_new_201811"
 
+#filename = "compound_test_old_201811"
+#db = "mmpdb_test_old_201811"
+
 #db_home = "/home/oriol/dev/mmpdb/test_db/"
 #filename = "compound_test"
 #db = "mmpdb_test_new"
@@ -166,7 +169,7 @@ def pg_create_database():
     con = psycopg2.connect(dbname='postgres', user=user, host=host,password=password)
     con.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
     cur = con.cursor()
-    cur.execute("DROP DATABASE %s  ;" % db)
+    cur.execute("DROP DATABASE IF EXISTS  %s  ;" % db)
     cur.execute("CREATE DATABASE %s  ;" % db)
     con.close()
 
